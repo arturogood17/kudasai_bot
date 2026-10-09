@@ -1,0 +1,1 @@
+// estructuras XML (título, link, categorías, fecha, media:content)

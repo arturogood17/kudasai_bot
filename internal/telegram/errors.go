@@ -1,0 +1,1 @@
+// distingue errores de una noticia de errores generales según el código de estado

@@ -1,0 +1,1 @@
+// escribir y leer el marcador (líneas fáciles de identificar) y el caso de primera ejecución

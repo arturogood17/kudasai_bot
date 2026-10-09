@@ -1,0 +1,1 @@
+// apertura del archivo de log y escritura de eventos y errores

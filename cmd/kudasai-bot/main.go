@@ -1,0 +1,1 @@
+// config → leer feed → filtrar → enviar → actualizar marcador

@@ -1,0 +1,1 @@
+// petición HTTP al feed con timeout y comprobación del código 200

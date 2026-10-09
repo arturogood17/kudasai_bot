@@ -1,0 +1,1 @@
+// lee el token y el chat ID desde variables de entorno y valida que existan
