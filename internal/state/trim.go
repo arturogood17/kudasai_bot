@@ -1,1 +1,2 @@
 // recorte del log al superar 1 MB conservando la última línea de marcador
+package state
