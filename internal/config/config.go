@@ -12,6 +12,7 @@ import (
 )
 
 const URL = "https://api.telegram.org/bot"
+const FEED = "https://somoskudasai.com/noticias/feed/"
 
 type Config struct {
 	TOKEN_ID string
