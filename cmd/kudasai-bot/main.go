@@ -6,6 +6,7 @@ import (
 
 	"github.com/arturogood17/kudasai_bot/internal/config"
 	"github.com/arturogood17/kudasai_bot/internal/feed"
+	"github.com/arturogood17/kudasai_bot/internal/filter"
 	"github.com/arturogood17/kudasai_bot/internal/state"
 	"github.com/arturogood17/kudasai_bot/internal/telegram"
 )
@@ -23,12 +24,16 @@ func main() {
 
 	client := telegram.New(configLoaded)
 
-	if err := client.SendPhoto(ctx, logger, feed.Post{
-		Title:    "El manhwa The Remarried Empress confirma su adaptación al anime para 2027",
-		URL:      "https://somoskudasai.com/noticias/el-manhwa-the-remarried-empress-confirma-su-adaptacion-al-anime-para-2027",
-		PhotoURL: "https://cdn.somoskudasai.com/width=1280,height=720,quality=75,format=auto,fit=cover/2026/10/the-remarried-empress-anime.jpg",
-		Category: "Anime",
-	}); err != nil {
+	posts, err := feed.Feed(ctx, client.Clt, logger)
+	if err != nil {
 		os.Exit(1)
 	}
+
+	filteredPosts := filter.FilterByCategory(posts)
+
+	err = telegram.SendPosts(ctx, client, logger, filteredPosts)
+	if err != nil {
+		os.Exit(1)
+	}
+
 }
