@@ -15,7 +15,7 @@ import (
 )
 
 type Client struct {
-	client  http.Client
+	Clt     *http.Client
 	Token   string
 	Chat_id int
 }
@@ -24,7 +24,7 @@ func New(c *config.Config) Client {
 	return Client{
 		Token:   c.TOKEN_ID,
 		Chat_id: c.CHAT_ID,
-		client:  http.Client{Timeout: 15 * time.Second},
+		Clt:     &http.Client{Timeout: 15 * time.Second},
 	}
 }
 
@@ -105,8 +105,6 @@ func (c *Client) SendPhoto(ctx context.Context, logger *slog.JSONHandler, post f
 		state.NewLogError(ctx, logger, time.Now(), slog.LevelError, "Unable to decode response body", err)
 		return err
 	}
-
-	fmt.Println(r["ok"])
 
 	return nil
 
