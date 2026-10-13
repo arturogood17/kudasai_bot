@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"os"
+	"time"
 
 	"github.com/arturogood17/kudasai_bot/internal/config"
 	"github.com/arturogood17/kudasai_bot/internal/feed"
@@ -19,6 +21,11 @@ func main() {
 
 	configLoaded := config.Load(ctx, logger)
 	if configLoaded == nil {
+		os.Exit(1)
+	}
+
+	if configLoaded.CHAT_ID == 0 || configLoaded.TOKEN_ID == "" {
+		state.NewLogError(ctx, logger, time.Now(), slog.LevelError, "Failed to load one of the secrets", nil)
 		os.Exit(1)
 	}
 
