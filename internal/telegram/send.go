@@ -18,6 +18,7 @@ func SendPosts(ctx context.Context, c Client, logger *slog.JSONHandler, posts []
 	for ; i <= numPosts-1; i++ {
 		p := posts[i]
 		if err := c.SendPhoto(ctx, logger, p); err != nil {
+			state.NewLogError(ctx, logger, time.Now(), slog.LevelWarn, fmt.Sprintf("Failed to send (title) {%s}. Trying just text message", p.Title), err)
 			msg := fmt.Sprintf("<a href='%v'>%v</a>", p.URL, p.Title)
 			if err = c.SendMessages(ctx, logger, msg); err != nil {
 				state.NewLogError(ctx, logger, time.Now(), slog.LevelError, fmt.Sprintf("Sent %d/%d. Failed to send (title) {%s}", i, numPosts, p.Title), err)

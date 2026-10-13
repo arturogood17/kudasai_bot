@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+	"unicode/utf8"
 
 	"github.com/arturogood17/kudasai_bot/internal/config"
 	"github.com/arturogood17/kudasai_bot/internal/feed"
@@ -77,6 +78,10 @@ func (c *Client) SendPhoto(ctx context.Context, logger *slog.JSONHandler, post f
 	URL := fmt.Sprintf("%v%v/sendPhoto", config.URL, c.Token)
 
 	caption := fmt.Sprintf("<a href='%v'>%v</a>", post.URL, post.Title)
+
+	if utf8.RuneCountInString(caption) > 1024 {
+		caption = caption[:1024]
+	}
 
 	d := content{
 		Photo:     post.PhotoURL,
