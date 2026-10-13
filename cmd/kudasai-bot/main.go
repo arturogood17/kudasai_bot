@@ -31,6 +31,8 @@ func main() {
 
 	filteredPosts := filter.FilterByCategory(posts)
 
+	filter.OrderPostsByDate(filteredPosts)
+
 	err = telegram.SendPosts(ctx, client, logger, filteredPosts)
 	if err != nil {
 		os.Exit(1)
