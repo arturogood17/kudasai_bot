@@ -16,3 +16,9 @@ func NewLogError(ctx context.Context, logger *slog.JSONHandler, t time.Time, lev
 	record.Add("Error", err)
 	logger.Handle(ctx, record)
 }
+
+func NewLogPostSuccess(ctx context.Context, logger *slog.JSONHandler, t time.Time, PubDate time.Time, level slog.Level, message string) {
+	record := slog.NewRecord(t, level, message, 0)
+	record.Add("Publication_Date", PubDate)
+	logger.Handle(ctx, record)
+}
