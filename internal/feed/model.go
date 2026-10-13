@@ -2,12 +2,15 @@
 
 package feed
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+	"time"
+)
 
 type Post struct {
 	Title    string
 	URL      string
-	PubDate  string
+	PubDate  time.Time
 	Category string
 	PhotoURL string
 }

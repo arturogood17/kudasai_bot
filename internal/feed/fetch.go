@@ -26,17 +26,17 @@ func Feed(ctx context.Context, c *http.Client, logger *slog.JSONHandler) ([]Post
 
 	defer resp.Body.Close()
 
-	return Posts(rss), nil
+	return Posts(ctx, logger, rss), err
 
 }
 
-func Posts(r RSS) []Post {
+func Posts(ctx context.Context, logger *slog.JSONHandler, r RSS) []Post {
 	var P []Post
 	for _, post := range r.Channel.Item {
 		np := Post{
 			Title:    post.Title,
 			URL:      post.Link,
-			PubDate:  post.PubDate,
+			PubDate:  PubDateParser(ctx, logger, post.PubDate),
 			Category: post.Category,
 			PhotoURL: post.Content.URL,
 		}
