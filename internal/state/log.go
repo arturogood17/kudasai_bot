@@ -2,23 +2,46 @@ package state
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"os"
 	"time"
 )
 
-func NewJSONLogger() *slog.JSONHandler {
-	return slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+type LogFile struct {
+	slog.Handler
 }
 
-func NewLogError(ctx context.Context, logger *slog.JSONHandler, t time.Time, level slog.Level, message string, err error) {
-	record := slog.NewRecord(t, level, message, 0)
-	record.Add("Error", err)
-	logger.Handle(ctx, record)
+func (l LogFile) Enabled(c context.Context, lvl slog.Level) bool {
+	return lvl == slog.LevelInfo
 }
 
-func NewLogPostSuccess(ctx context.Context, logger *slog.JSONHandler, t time.Time, PubDate time.Time, level slog.Level, message string) {
-	record := slog.NewRecord(t, level, message, 0)
-	record.Add("Publication_Date", PubDate)
-	logger.Handle(ctx, record)
+func (l LogFile) WithAttrs(attrs []slog.Attr) slog.Handler {
+	newHandler := l.Handler.WithAttrs(attrs)
+	return LogFile{newHandler}
+}
+
+func (l LogFile) WithGroup(name string) slog.Handler {
+	newHandler := l.Handler.WithGroup(name)
+	return LogFile{newHandler}
+}
+
+func NewMultilogger(ErrorFile, LogInfoFile *os.File) *slog.Logger {
+	LF := LogFile{
+		slog.NewJSONHandler(LogInfoFile, nil),
+	}
+	ErrorHandler := NewHandler(ErrorFile, slog.LevelWarn)
+	return slog.New(slog.NewMultiHandler(LF, ErrorHandler))
+}
+
+func NewHandler(FileToLog io.Writer, level slog.Level) *slog.JSONHandler {
+	return slog.NewJSONHandler(FileToLog, &slog.HandlerOptions{Level: level})
+}
+
+func NewLogError(logger *slog.Logger, t time.Time, message string, err error) {
+	logger.Error(message, "Date", t, "Error", err)
+}
+
+func NewLogPostSuccess(logger *slog.Logger, t time.Time, PubDate time.Time, message string) {
+	logger.Info(message, "Date", t, "Publication_Date", PubDate)
 }
