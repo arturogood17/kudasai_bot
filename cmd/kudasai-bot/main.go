@@ -1,8 +1,7 @@
 package main
 
 import (
-	"context"
-	"log/slog"
+	"fmt"
 	"os"
 	"time"
 
@@ -15,23 +14,36 @@ import (
 
 func main() {
 
-	ctx := context.Background()
+	LogFile, err := config.OpenOrCreateLogFile(config.LOGFILEPATH)
+	if err != nil {
+		fmt.Printf("No se pudo abrir/crear el archivo de logging: %v", err)
+		os.Exit(1)
+	}
 
-	logger := state.NewJSONLogger()
+	ErrorFile, err := config.OpenOrCreateLogFile(config.ERRORFILEPATH)
+	if err != nil {
+		fmt.Printf("No se pudo abrir el archivo de logging de errores: %v", err)
+		os.Exit(1)
+	}
 
-	configLoaded := config.Load(ctx, logger)
+	defer LogFile.Close()
+	defer ErrorFile.Close()
+
+	logger := state.NewMultilogger(ErrorFile, LogFile)
+
+	configLoaded := config.Load(logger)
 	if configLoaded == nil {
 		os.Exit(1)
 	}
 
 	if configLoaded.CHAT_ID == 0 || configLoaded.TOKEN_ID == "" {
-		state.NewLogError(ctx, logger, time.Now(), slog.LevelError, "Failed to load one of the secrets", nil)
+		state.NewLogError(logger, time.Now(), "Failed to load one of the secrets", nil)
 		os.Exit(1)
 	}
 
 	client := telegram.New(configLoaded)
 
-	posts, err := feed.Feed(ctx, client.Clt, logger)
+	posts, err := feed.Feed(client.Clt, logger)
 	if err != nil {
 		os.Exit(1)
 	}
@@ -40,7 +52,7 @@ func main() {
 
 	filter.OrderPostsByDate(filteredPosts)
 
-	err = telegram.SendPosts(ctx, client, logger, filteredPosts)
+	err = telegram.SendPosts(client, logger, filteredPosts)
 	if err != nil {
 		os.Exit(1)
 	}
