@@ -23,7 +23,7 @@ func SendPosts(c Client, logger *slog.Logger, posts []feed.Post) error {
 				state.NewLogError(logger, time.Now(), fmt.Sprintf("Sent %d/%d. Failed to send (title) {%s}", i, numPosts, p.Title), err)
 			}
 		}
-		state.NewLogPostSuccess(logger, time.Now(), p.PubDate, fmt.Sprintf("Sent %d/%d. Last sent (title) {%s}", i, numPosts, p.Title))
+		state.NewLogPostSuccess(logger, time.Now(), p.PubDate, fmt.Sprintf("Sent %d/%d. Last sent (title) {%s}", i+1, numPosts, p.Title))
 	}
 
 	state.Marker(logger, posts[i-1].Title, posts[i-1].PubDate)
