@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -29,7 +28,7 @@ func New(c *config.Config) Client {
 	}
 }
 
-func (c *Client) SendMessages(ctx context.Context, logger *slog.JSONHandler, message any) error {
+func (c *Client) SendMessages(logger *slog.Logger, message any) error {
 	type content struct {
 		Text    string `json:"text"`
 		Chat_ID int    `json:"chat_id"`
@@ -44,13 +43,13 @@ func (c *Client) SendMessages(ctx context.Context, logger *slog.JSONHandler, mes
 
 	data, err := toMarshalAndBuffer(d)
 	if data == nil {
-		state.NewLogError(ctx, logger, time.Now(), slog.LevelError, "Unable to marshal body", err)
+		state.NewLogError(logger, time.Now(), "Unable to marshal body", err)
 		return err
 	}
 
 	resp, err := http.Post(URL, "application/json", data)
 	if err != nil {
-		state.NewLogError(ctx, logger, time.Now(), slog.LevelError, "Unable to post message", err)
+		state.NewLogError(logger, time.Now(), "Unable to post message", err)
 		return err
 	}
 
@@ -59,7 +58,7 @@ func (c *Client) SendMessages(ctx context.Context, logger *slog.JSONHandler, mes
 	var r map[string]any
 
 	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
-		state.NewLogError(ctx, logger, time.Now(), slog.LevelError, "Unable to decode response body", err)
+		state.NewLogError(logger, time.Now(), "Unable to decode response body", err)
 		return err
 	}
 
@@ -67,7 +66,7 @@ func (c *Client) SendMessages(ctx context.Context, logger *slog.JSONHandler, mes
 	//agregar fecha de la noticia al login para saber cuál fue la última
 }
 
-func (c *Client) SendPhoto(ctx context.Context, logger *slog.JSONHandler, post feed.Post) error {
+func (c *Client) SendPhoto(logger *slog.Logger, post feed.Post) error {
 	type content struct {
 		Photo     string `json:"photo"`
 		Caption   string `json:"caption"`
@@ -92,13 +91,13 @@ func (c *Client) SendPhoto(ctx context.Context, logger *slog.JSONHandler, post f
 
 	data, err := toMarshalAndBuffer(d)
 	if data == nil {
-		state.NewLogError(ctx, logger, time.Now(), slog.LevelError, "Unable to marshal body", err)
+		state.NewLogError(logger, time.Now(), "Unable to marshal body", err)
 		return err
 	}
 
 	resp, err := http.Post(URL, "application/json", data)
 	if err != nil {
-		state.NewLogError(ctx, logger, time.Now(), slog.LevelError, "Unable to post message", err)
+		state.NewLogError(logger, time.Now(), "Unable to post message", err)
 		return err
 	}
 
@@ -107,7 +106,7 @@ func (c *Client) SendPhoto(ctx context.Context, logger *slog.JSONHandler, post f
 	var r map[string]any
 
 	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
-		state.NewLogError(ctx, logger, time.Now(), slog.LevelError, "Unable to decode response body", err)
+		state.NewLogError(logger, time.Now(), "Unable to decode response body", err)
 		return err
 	}
 

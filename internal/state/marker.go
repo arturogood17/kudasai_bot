@@ -2,14 +2,10 @@
 package state
 
 import (
-	"context"
 	"log/slog"
 	"time"
 )
 
-func Marker(ctx context.Context, logger *slog.JSONHandler, title string, TFetch time.Time) {
-	record := slog.NewRecord(time.Now(), slog.LevelInfo, "Marker Set", 0)
-	record.Add("Title", title)
-	record.Add("LastestFetch", TFetch)
-	logger.Handle(ctx, record)
+func Marker(logger *slog.Logger, title string, TFetch time.Time) {
+	logger.Info("Marker Set", "Marker_date_set", time.Now(), "Last_title_fetch", title, "LastestFetch", TFetch)
 }

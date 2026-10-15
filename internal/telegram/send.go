@@ -3,7 +3,6 @@
 package telegram
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"time"
@@ -12,22 +11,22 @@ import (
 	"github.com/arturogood17/kudasai_bot/internal/state"
 )
 
-func SendPosts(ctx context.Context, c Client, logger *slog.JSONHandler, posts []feed.Post) error {
+func SendPosts(c Client, logger *slog.Logger, posts []feed.Post) error {
 	numPosts := len(posts)
 	i := 0
 	for ; i <= numPosts-1; i++ {
 		p := posts[i]
-		if err := c.SendPhoto(ctx, logger, p); err != nil {
-			state.NewLogError(ctx, logger, time.Now(), slog.LevelWarn, fmt.Sprintf("Failed to send (title) {%s}. Trying just text message", p.Title), err)
+		if err := c.SendPhoto(logger, p); err != nil {
+			logger.Warn(fmt.Sprintf("Failed to send (title) {%s}. Trying just text message", p.Title), "Warning_date", time.Now(), "Error", err)
 			msg := fmt.Sprintf("<a href='%v'>%v</a>", p.URL, p.Title)
-			if err = c.SendMessages(ctx, logger, msg); err != nil {
-				state.NewLogError(ctx, logger, time.Now(), slog.LevelError, fmt.Sprintf("Sent %d/%d. Failed to send (title) {%s}", i, numPosts, p.Title), err)
+			if err = c.SendMessages(logger, msg); err != nil {
+				state.NewLogError(logger, time.Now(), fmt.Sprintf("Sent %d/%d. Failed to send (title) {%s}", i, numPosts, p.Title), err)
 			}
 		}
-		state.NewLogPostSuccess(ctx, logger, time.Now(), p.PubDate, slog.LevelInfo, fmt.Sprintf("Sent %d/%d. Last sent (title) {%s}", i, numPosts, p.Title))
+		state.NewLogPostSuccess(logger, time.Now(), p.PubDate, fmt.Sprintf("Sent %d/%d. Last sent (title) {%s}", i, numPosts, p.Title))
 	}
 
-	state.Marker(ctx, logger, posts[i-1].Title, posts[i-1].PubDate)
+	state.Marker(logger, posts[i-1].Title, posts[i-1].PubDate)
 
 	return nil
 }
