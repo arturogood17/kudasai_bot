@@ -16,13 +16,13 @@ func main() {
 
 	LogFile, err := config.OpenOrCreateLogFile(config.LOGFILEPATH)
 	if err != nil {
-		fmt.Printf("No se pudo abrir/crear el archivo de logging: %v", err)
+		fmt.Printf("Couldn't open/create the logging file: %v", err)
 		os.Exit(1)
 	}
 
 	ErrorFile, err := config.OpenOrCreateLogFile(config.ERRORFILEPATH)
 	if err != nil {
-		fmt.Printf("No se pudo abrir el archivo de logging de errores: %v", err)
+		fmt.Printf("Couldn't open/create the error logging file: %v", err)
 		os.Exit(1)
 	}
 
@@ -30,6 +30,11 @@ func main() {
 	defer ErrorFile.Close()
 
 	logger := state.NewMultilogger(ErrorFile, LogFile)
+
+	markerNews, err := filter.GetMarker(logger, LogFile)
+	if err != nil {
+		os.Exit(1)
+	}
 
 	configLoaded := config.Load(logger)
 	if configLoaded == nil {
@@ -52,7 +57,13 @@ func main() {
 
 	filter.OrderPostsByDate(filteredPosts)
 
-	err = telegram.SendPosts(client, logger, filteredPosts)
+	lastestPosts := filter.FilterByDate(logger, markerNews, filteredPosts)
+	if len(lastestPosts) == 0 {
+		logger.Info("Nothing to fetch")
+		os.Exit(0)
+	}
+
+	err = telegram.SendPosts(client, logger, lastestPosts)
 	if err != nil {
 		os.Exit(1)
 	}
