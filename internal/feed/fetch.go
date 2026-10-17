@@ -36,7 +36,7 @@ func Posts(logger *slog.Logger, r RSS) []Post {
 		np := Post{
 			Title:    post.Title,
 			URL:      post.Link,
-			PubDate:  PubDateParser(logger, post.PubDate, post.Title),
+			PubDate:  PubDateParser(logger, post.PubDate, post.Title, time.RFC1123Z),
 			Category: post.Category,
 			PhotoURL: post.Content.URL,
 		}
