@@ -41,7 +41,7 @@ func (c *Client) SendMessages(logger *slog.Logger, message any) error {
 		Chat_ID: c.Chat_id,
 	}
 
-	data, err := toMarshalAndBuffer(d)
+	data, err := ToMarshalAndBuffer(d)
 	if data == nil {
 		state.NewLogError(logger, time.Now(), "Unable to marshal body", err)
 		return err
@@ -55,6 +55,7 @@ func (c *Client) SendMessages(logger *slog.Logger, message any) error {
 
 	defer resp.Body.Close()
 
+	//For debugging. Needs to be erased.
 	var r map[string]any
 
 	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
@@ -89,7 +90,7 @@ func (c *Client) SendPhoto(logger *slog.Logger, post feed.Post) error {
 		ParseMode: "HTML",
 	}
 
-	data, err := toMarshalAndBuffer(d)
+	data, err := ToMarshalAndBuffer(d)
 	if data == nil {
 		state.NewLogError(logger, time.Now(), "Unable to marshal body", err)
 		return err
@@ -103,6 +104,8 @@ func (c *Client) SendPhoto(logger *slog.Logger, post feed.Post) error {
 
 	defer resp.Body.Close()
 
+	//For debugging. Needs to be erased.
+
 	var r map[string]any
 
 	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
@@ -114,7 +117,7 @@ func (c *Client) SendPhoto(logger *slog.Logger, post feed.Post) error {
 
 }
 
-func toMarshalAndBuffer(d any) (*bytes.Buffer, error) {
+func ToMarshalAndBuffer(d any) (*bytes.Buffer, error) {
 	p, err := json.Marshal(d)
 	if err != nil {
 		return nil, err
