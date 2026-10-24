@@ -19,7 +19,7 @@ func SendPosts(c Client, logger *slog.Logger, posts []feed.Post) error {
 		if err := c.SendPhoto(logger, p); err != nil {
 			logger.Warn(fmt.Sprintf("Failed to send (title) {%s}. Trying just text message", p.Title), "Warning_date", time.Now(), "Error", err)
 			msg := fmt.Sprintf("<a href='%v'>%v</a>", p.URL, p.Title)
-			if err = c.SendMessages(logger, msg); err != nil {
+			if err = c.SendMessage(logger, msg); err != nil {
 				state.NewLogError(logger, time.Now(), fmt.Sprintf("Sent %d/%d. Failed to send (title) {%s}", i, numPosts, p.Title), err)
 			}
 		}

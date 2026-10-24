@@ -28,7 +28,7 @@ func New(c *config.Config) Client {
 	}
 }
 
-func (c *Client) SendMessages(logger *slog.Logger, message any) error {
+func (c *Client) SendMessage(logger *slog.Logger, message any) error {
 	type content struct {
 		Text    string `json:"text"`
 		Chat_ID int    `json:"chat_id"`
@@ -47,21 +47,20 @@ func (c *Client) SendMessages(logger *slog.Logger, message any) error {
 		return err
 	}
 
-	resp, err := http.Post(URL, "application/json", data)
+	req, err := http.NewRequest("POST", URL, data)
+	if err != nil {
+		state.NewLogError(logger, time.Now(), "Error creating request", err)
+		return err
+	}
+	req.Header.Add("content-type", "application/json")
+
+	resp, err := c.Clt.Do(req)
 	if err != nil {
 		state.NewLogError(logger, time.Now(), "Unable to post message", err)
 		return err
 	}
 
 	defer resp.Body.Close()
-
-	//For debugging. Needs to be erased.
-	var r map[string]any
-
-	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
-		state.NewLogError(logger, time.Now(), "Unable to decode response body", err)
-		return err
-	}
 
 	return nil
 	//agregar fecha de la noticia al login para saber cuál fue la última
@@ -96,7 +95,14 @@ func (c *Client) SendPhoto(logger *slog.Logger, post feed.Post) error {
 		return err
 	}
 
-	resp, err := http.Post(URL, "application/json", data)
+	req, err := http.NewRequest("POST", URL, data)
+	if err != nil {
+		state.NewLogError(logger, time.Now(), "Error creating request", err)
+		return err
+	}
+	req.Header.Add("content-type", "application/json")
+
+	resp, err := c.Clt.Do(req)
 	if err != nil {
 		state.NewLogError(logger, time.Now(), "Unable to post message", err)
 		return err
