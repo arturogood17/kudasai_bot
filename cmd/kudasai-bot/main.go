@@ -5,9 +5,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/arturogood17/kudasai_bot/internal/bot"
 	"github.com/arturogood17/kudasai_bot/internal/config"
-	"github.com/arturogood17/kudasai_bot/internal/feed"
-	"github.com/arturogood17/kudasai_bot/internal/filter"
 	"github.com/arturogood17/kudasai_bot/internal/state"
 	"github.com/arturogood17/kudasai_bot/internal/telegram"
 )
@@ -31,11 +30,6 @@ func main() {
 
 	logger := state.NewMultilogger(ErrorFile, LogFile)
 
-	markerNews, err := filter.GetMarker(logger, LogFile)
-	if err != nil {
-		os.Exit(1)
-	}
-
 	configLoaded := config.Load(logger)
 	if configLoaded == nil {
 		os.Exit(1)
@@ -48,24 +42,6 @@ func main() {
 
 	client := telegram.New(configLoaded)
 
-	posts, err := feed.Feed(client.Clt, logger)
-	if err != nil {
-		os.Exit(1)
-	}
-
-	filteredPosts := filter.FilterByCategory(posts)
-
-	filter.OrderPostsByDate(filteredPosts)
-
-	lastestPosts := filter.FilterByDate(logger, markerNews, filteredPosts)
-	if len(lastestPosts) == 0 {
-		logger.Info("Nothing to fetch")
-		os.Exit(0)
-	}
-
-	err = telegram.SendPosts(client, logger, lastestPosts)
-	if err != nil {
-		os.Exit(1)
-	}
+	bot.BotLogic(client, logger)
 
 }
