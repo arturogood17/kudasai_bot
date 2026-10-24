@@ -15,6 +15,7 @@ const URL = "https://api.telegram.org/bot"
 const FEED = "https://somoskudasai.com/noticias/feed/"
 const ERRORFILEPATH = "ErrorFile.log"
 const LOGFILEPATH = "LogInfoFile.log"
+const DATA = "data"
 
 type Config struct {
 	TOKEN_ID string
@@ -45,7 +46,7 @@ func OpenOrCreateLogFile(filename string) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	FileCreation := path.Join(cwd, "data", filename)
+	FileCreation := path.Join(cwd, DATA, filename)
 	File, err := os.OpenFile(FileCreation, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o644)
 	if err != nil {
 		return nil, err
