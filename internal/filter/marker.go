@@ -4,10 +4,10 @@ package filter
 import (
 	"encoding/json"
 	"log/slog"
-	"os"
 	"sort"
 	"time"
 
+	"github.com/arturogood17/kudasai_bot/internal/config"
 	"github.com/arturogood17/kudasai_bot/internal/feed"
 	"github.com/arturogood17/kudasai_bot/internal/state"
 )
@@ -18,9 +18,16 @@ func OrderPostsByDate(posts []feed.Post) {
 	})
 }
 
-func readLogs(jsonFile *os.File) ([]map[string]any, error) {
+func readLogs() ([]map[string]any, error) {
+	logFile, err := config.OpenOrCreateLogFile(config.LOGFILEPATH)
+	if err != nil {
+		return nil, err
+	}
+
+	defer logFile.Close()
+
 	var fullFile []map[string]any
-	decoder := json.NewDecoder(jsonFile)
+	decoder := json.NewDecoder(logFile)
 
 	for decoder.More() {
 		var data map[string]any
@@ -28,43 +35,36 @@ func readLogs(jsonFile *os.File) ([]map[string]any, error) {
 		if err != nil {
 			return nil, err
 		}
-		fullFile = append(fullFile, data)
+		if _, ok := data["Last_title_fetch"]; ok {
+			fullFile = append(fullFile, data)
+		}
 	}
+
 	return fullFile, nil
 }
 
-func GetMarker(logger *slog.Logger, logs *os.File) (map[string]any, error) {
-	LogNews, err := readLogs(logs)
+func GetTimeMarker(logger *slog.Logger) (time.Time, error) {
+	var lastest time.Time
+
+	LogNews, err := readLogs()
 	if err != nil {
 		state.NewLogError(logger, time.Now(), "Error obtaining the marker", err)
-		return nil, err
+		return lastest, err
 	}
 
-	var m map[string]any
-
-	if len(LogNews) != 0 {
-		for i, v := range LogNews {
-			if _, ok := LogNews[i]["Last_title_fetch"]; ok {
-				if _, ok = LogNews[i]["LastestFetch"]; ok {
-					m = v
-				}
-			}
+	for _, l := range LogNews {
+		pTime := feed.PubDateParser(logger, l["LastestFetch"].(string), "News publish marker", time.RFC3339)
+		if pTime.After(lastest) {
+			lastest = pTime
 		}
-	} else {
-		return nil, nil
 	}
-	return m, nil
+	return lastest, nil
 }
 
-func FilterByDate(logger *slog.Logger, m map[string]any, posts []feed.Post) []feed.Post {
-	if len(m) == 0 {
-		return posts
-	}
-	lastestFetch := m["LastestFetch"]
-	t := feed.PubDateParser(logger, lastestFetch.(string), "Filtering By Date", time.RFC3339)
+func FilterByDate(logger *slog.Logger, latest time.Time, posts []feed.Post) []feed.Post {
 	var lastestPost []feed.Post
 	for _, p := range posts {
-		if t.Before(p.PubDate) {
+		if latest.Before(p.PubDate) {
 			lastestPost = append(lastestPost, p)
 		}
 	}
