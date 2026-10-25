@@ -36,34 +36,20 @@ func (c *Client) SendMessage(logger *slog.Logger, message any) error {
 
 	URL := fmt.Sprintf("%v%v/sendMessage", config.URL, c.Token)
 
-	d := content{
+	payload := content{
 		Text:    message.(string),
 		Chat_ID: c.Chat_id,
 	}
 
-	data, err := ToMarshalAndBuffer(d)
-	if data == nil {
-		state.NewLogError(logger, time.Now(), "Unable to marshal body", err)
-		return err
-	}
-
-	req, err := http.NewRequest("POST", URL, data)
+	resp, err := RequestSending(c.Clt, URL, "POST", payload)
 	if err != nil {
-		state.NewLogError(logger, time.Now(), "Error creating request", err)
-		return err
-	}
-	req.Header.Add("content-type", "application/json")
-
-	resp, err := c.Clt.Do(req)
-	if err != nil {
-		state.NewLogError(logger, time.Now(), "Unable to post message", err)
+		state.NewLogError(logger, time.Now(), "Error trying to send the request", err)
 		return err
 	}
 
 	defer resp.Body.Close()
 
 	return nil
-	//agregar fecha de la noticia al login para saber cuál fue la última
 }
 
 func (c *Client) SendPhoto(logger *slog.Logger, post feed.Post) error {
@@ -82,42 +68,20 @@ func (c *Client) SendPhoto(logger *slog.Logger, post feed.Post) error {
 		caption = caption[:1024]
 	}
 
-	d := content{
+	payload := content{
 		Photo:     post.PhotoURL,
 		Chat_ID:   c.Chat_id,
 		Caption:   caption,
 		ParseMode: "HTML",
 	}
 
-	data, err := ToMarshalAndBuffer(d)
-	if data == nil {
-		state.NewLogError(logger, time.Now(), "Unable to marshal body", err)
-		return err
-	}
-
-	req, err := http.NewRequest("POST", URL, data)
+	resp, err := RequestSending(c.Clt, URL, "POST", payload)
 	if err != nil {
-		state.NewLogError(logger, time.Now(), "Error creating request", err)
-		return err
-	}
-	req.Header.Add("content-type", "application/json")
-
-	resp, err := c.Clt.Do(req)
-	if err != nil {
-		state.NewLogError(logger, time.Now(), "Unable to post message", err)
+		state.NewLogError(logger, time.Now(), "Error trying to send the request", err)
 		return err
 	}
 
 	defer resp.Body.Close()
-
-	//For debugging. Needs to be erased.
-
-	var r map[string]any
-
-	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
-		state.NewLogError(logger, time.Now(), "Unable to decode response body", err)
-		return err
-	}
 
 	return nil
 
@@ -130,4 +94,24 @@ func ToMarshalAndBuffer(d any) (*bytes.Buffer, error) {
 	}
 
 	return bytes.NewBuffer(p), nil
+}
+
+func RequestSending(c *http.Client, URL string, method string, payload any) (*http.Response, error) {
+	data, err := ToMarshalAndBuffer(payload)
+	if data == nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(method, URL, data)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("content-type", "application/json")
+
+	resp, err := c.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }

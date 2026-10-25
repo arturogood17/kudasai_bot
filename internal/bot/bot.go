@@ -28,12 +28,12 @@ func BotLogic(c telegram.Client, logger *slog.Logger) {
 
 	for {
 
-		reqB := requestBody{
+		payload := requestBody{
 			Offset:  int32(offset),
 			Timeout: 45,
 		}
 
-		upd, err := requestAnddecoding(client, reqB, URL)
+		resp, err := telegram.RequestSending(&client, URL, "POST", payload)
 		if err != nil {
 			state.NewLogError(logger, time.Now(), "Error trying to send the request", err)
 			time.Sleep(retryTime)
@@ -45,6 +45,15 @@ func BotLogic(c telegram.Client, logger *slog.Logger) {
 		}
 
 		retryTime = 1 * time.Second
+
+		var upd Updates
+
+		if err = json.NewDecoder(resp.Body).Decode(&upd); err != nil {
+			state.NewLogError(logger, time.Now(), "Error trying to decode the response from server", err)
+			return
+		}
+
+		defer resp.Body.Close()
 
 		if len(upd.Result) > 0 {
 			mostRecentMsg := upd.Result[len(upd.Result)-1]
@@ -78,34 +87,4 @@ func BotLogic(c telegram.Client, logger *slog.Logger) {
 			countRetries = 0
 		}
 	}
-}
-
-func requestAnddecoding(c http.Client, reqB any, URL string) (Updates, error) {
-	//Se podrá hacer generic para que devuelva otras cosas que no sean Updates y se hace un type assertion
-	data, err := telegram.ToMarshalAndBuffer(reqB)
-	if err != nil {
-		return Updates{}, err
-	}
-
-	req, err := http.NewRequest("POST", URL, data)
-	if err != nil {
-		return Updates{}, err
-	}
-
-	req.Header.Add("content-type", "application/json")
-
-	resp, err := c.Do(req)
-	if err != nil {
-		return Updates{}, err
-	}
-
-	defer resp.Body.Close()
-
-	var upd Updates
-
-	if err = json.NewDecoder(resp.Body).Decode(&upd); err != nil {
-		return Updates{}, err
-	}
-
-	return upd, nil
 }
