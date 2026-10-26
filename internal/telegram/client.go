@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -16,15 +17,17 @@ import (
 
 type Client struct {
 	Clt     *http.Client
+	Ctx     context.Context
 	Token   string
 	Chat_id int
 }
 
-func New(c *config.Config) Client {
+func New(ctx context.Context, c *config.Config) Client {
 	return Client{
 		Token:   c.TOKEN_ID,
 		Chat_id: c.CHAT_ID,
-		Clt:     &http.Client{Timeout: 15 * time.Second},
+		Clt:     &http.Client{Timeout: 45 * time.Second},
+		Ctx:     ctx,
 	}
 }
 
@@ -41,9 +44,9 @@ func (c *Client) SendMessage(logger *slog.Logger, message any) error {
 		Chat_ID: c.Chat_id,
 	}
 
-	resp, err := RequestSending(c.Clt, URL, "POST", payload)
+	resp, err := RequestSending(c, URL, "POST", payload)
 	if err != nil {
-		state.NewLogError(logger, time.Now(), "Error trying to send the request", err)
+		state.NewLogError(logger, time.Now(), "Error trying to send the request", nil)
 		return err
 	}
 
@@ -75,9 +78,9 @@ func (c *Client) SendPhoto(logger *slog.Logger, post feed.Post) error {
 		ParseMode: "HTML",
 	}
 
-	resp, err := RequestSending(c.Clt, URL, "POST", payload)
+	resp, err := RequestSending(c, URL, "POST", payload)
 	if err != nil {
-		state.NewLogError(logger, time.Now(), "Error trying to send the request", err)
+		state.NewLogError(logger, time.Now(), err.Error(), nil)
 		return err
 	}
 
@@ -96,20 +99,20 @@ func ToMarshalAndBuffer(d any) (*bytes.Buffer, error) {
 	return bytes.NewBuffer(p), nil
 }
 
-func RequestSending(c *http.Client, URL string, method string, payload any) (*http.Response, error) {
+func RequestSending(c *Client, URL string, method string, payload any) (*http.Response, error) {
 	data, err := ToMarshalAndBuffer(payload)
 	if data == nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest(method, URL, data)
+	req, err := http.NewRequestWithContext(c.Ctx, method, URL, data)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Add("content-type", "application/json")
 
-	resp, err := c.Do(req)
+	resp, err := c.Clt.Do(req)
 	if err != nil {
 		return nil, err
 	}
