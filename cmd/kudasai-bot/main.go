@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/arturogood17/kudasai_bot/internal/bot"
@@ -40,7 +43,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	client := telegram.New(configLoaded)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	client := telegram.New(ctx, configLoaded)
 
 	bot.BotLogic(client, logger)
 
