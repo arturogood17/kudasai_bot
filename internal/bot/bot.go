@@ -1,10 +1,11 @@
 package bot
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"strings"
 	"time"
 
@@ -21,70 +22,81 @@ func BotLogic(c telegram.Client, logger *slog.Logger) {
 		Timeout int32 `json:"timeout"`
 	}
 
-	client := http.Client{Timeout: 55 * time.Second}
 	offset := 0
 	retryTime := 1 * time.Second
 	countRetries := 0
 
+loop:
 	for {
-
-		payload := requestBody{
-			Offset:  int32(offset),
-			Timeout: 45,
-		}
-
-		resp, err := telegram.RequestSending(&client, URL, "POST", payload)
-		if err != nil {
-			state.NewLogError(logger, time.Now(), "Error trying to send the request", err)
-			time.Sleep(retryTime)
-			retryTime += 1 * time.Second
-			if retryTime >= 30*time.Second {
-				retryTime = 30 * time.Second
-			}
-			continue
-		}
-
-		retryTime = 1 * time.Second
-
-		var upd Updates
-
-		if err = json.NewDecoder(resp.Body).Decode(&upd); err != nil {
-			state.NewLogError(logger, time.Now(), "Error trying to decode the response from server", err)
-			return
-		}
-
-		defer resp.Body.Close()
-
-		if len(upd.Result) > 0 {
-			mostRecentMsg := upd.Result[len(upd.Result)-1]
-			offset = mostRecentMsg.UpdateID + 1
-			if !messageAuth(mostRecentMsg.Message.From.ID, c.Chat_id) {
-				c.SendMessage(logger, "Unavailable")
-				state.NewLogError(logger, time.Now(), "Invalid user attempt", nil)
-				continue
+		select {
+		case <-c.Ctx.Done():
+			state.NewLogError(logger, time.Now(), "Bot closed", c.Ctx.Err())
+			fmt.Println("\nClosing bot")
+			break loop
+		default:
+			payload := requestBody{
+				Offset:  int32(offset),
+				Timeout: 30,
 			}
 
-			if strings.ToLower(mostRecentMsg.Message.Text) != "fetch" {
-				c.SendMessage(logger, "Command not recongnize")
-				continue
-			}
-			if err := CommandRun(logger, c); err != nil {
-				state.NewLogError(logger, time.Now(), "Error serving posts", err)
-				offset = mostRecentMsg.UpdateID
+			resp, err := telegram.RequestSending(&c, URL, "POST", payload)
+			if errors.Is(err, context.Canceled) {
+				state.NewLogError(logger, time.Now(), "Bot closed", c.Ctx.Err())
+				fmt.Println("\nClosing bot")
+				break loop
+			} else if err != nil {
+				state.NewLogError(logger, time.Now(), "Error trying to send the request for long polling", nil)
 				time.Sleep(retryTime)
 				retryTime += 1 * time.Second
 				if retryTime >= 30*time.Second {
 					retryTime = 30 * time.Second
 				}
-				countRetries += 1
-				if countRetries >= 4 {
-					offset = mostRecentMsg.UpdateID + 1
-					countRetries = 0
-				}
 				continue
 			}
+
 			retryTime = 1 * time.Second
-			countRetries = 0
+
+			var upd Updates
+
+			if err = json.NewDecoder(resp.Body).Decode(&upd); err != nil {
+				state.NewLogError(logger, time.Now(), "Error trying to decode the response from server", err)
+				return
+			}
+
+			defer resp.Body.Close()
+
+			if len(upd.Result) > 0 {
+				mostRecentMsg := upd.Result[len(upd.Result)-1]
+				offset = mostRecentMsg.UpdateID + 1
+				if !messageAuth(mostRecentMsg.Message.From.ID, c.Chat_id) {
+					c.SendMessage(logger, "Unavailable")
+					state.NewLogError(logger, time.Now(), "Invalid user attempt", nil)
+					continue
+				}
+
+				if strings.ToLower(mostRecentMsg.Message.Text) != "fetch" {
+					c.SendMessage(logger, "Command not recongnize")
+					continue
+				}
+				if err := CommandRun(logger, c); err != nil {
+					state.NewLogError(logger, time.Now(), "Error serving posts", err)
+					offset = mostRecentMsg.UpdateID
+					time.Sleep(retryTime)
+					retryTime += 1 * time.Second
+					if retryTime >= 30*time.Second {
+						retryTime = 30 * time.Second
+					}
+					countRetries += 1
+					if countRetries >= 4 {
+						offset = mostRecentMsg.UpdateID + 1
+						countRetries = 0
+					}
+					continue
+				}
+				retryTime = 1 * time.Second
+				countRetries = 0
+			}
 		}
+
 	}
 }
