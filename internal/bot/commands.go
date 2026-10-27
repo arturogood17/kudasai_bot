@@ -26,7 +26,7 @@ func CommandRun(logger *slog.Logger, c telegram.Client) error {
 	lastestPosts := filter.FilterByDate(logger, timeNewsMarker, filteredPosts)
 	if len(lastestPosts) == 0 {
 		logger.Info("Nothing to fetch")
-		c.SendMessage(logger, "Nothing to fetch")
+		c.SendMessage(logger, feed.Post{}, "Nothing to fetch")
 		return nil
 	}
 

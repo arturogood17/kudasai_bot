@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/arturogood17/kudasai_bot/internal/config"
+	"github.com/arturogood17/kudasai_bot/internal/feed"
 	"github.com/arturogood17/kudasai_bot/internal/state"
 	"github.com/arturogood17/kudasai_bot/internal/telegram"
 )
@@ -69,13 +70,13 @@ loop:
 				mostRecentMsg := upd.Result[len(upd.Result)-1]
 				offset = mostRecentMsg.UpdateID + 1
 				if !messageAuth(mostRecentMsg.Message.From.ID, c.Chat_id) {
-					c.SendMessage(logger, "Unavailable")
+					c.SendMessage(logger, feed.Post{}, "Unavailable")
 					state.NewLogError(logger, time.Now(), "Invalid user attempt", nil)
 					continue
 				}
 
 				if strings.ToLower(mostRecentMsg.Message.Text) != "fetch" {
-					c.SendMessage(logger, "Command not recongnize")
+					c.SendMessage(logger, feed.Post{}, "Command not recongnize")
 					continue
 				}
 				if err := CommandRun(logger, c); err != nil {
