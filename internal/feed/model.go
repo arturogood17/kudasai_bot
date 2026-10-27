@@ -8,11 +8,13 @@ import (
 )
 
 type Post struct {
-	Title    string
-	URL      string
-	PubDate  time.Time
-	Category string
-	PhotoURL string
+	Title     string
+	URL       string
+	PubDate   time.Time
+	Category  string
+	PhotoURL  string
+	TotalPost int
+	PostNum   int
 }
 
 type RSS struct {
