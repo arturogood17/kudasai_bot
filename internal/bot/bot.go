@@ -31,7 +31,7 @@ loop:
 	for {
 		select {
 		case <-c.Ctx.Done():
-			state.NewLogError(logger, time.Now(), "Bot closed", c.Ctx.Err())
+			state.NewLogClosedInfo(logger, time.Now(), "Bot closed", c.Ctx.Err())
 			fmt.Println("\nClosing bot")
 			break loop
 		default:
@@ -40,9 +40,9 @@ loop:
 				Timeout: 30,
 			}
 
-			resp, err := telegram.RequestSending(&c, URL, "POST", payload)
+			resp, err := telegram.RequestSending(&c, c.Ctx, URL, "POST", payload)
 			if errors.Is(err, context.Canceled) {
-				state.NewLogError(logger, time.Now(), "Bot closed", c.Ctx.Err())
+				state.NewLogClosedInfo(logger, time.Now(), "Bot closed", c.Ctx.Err())
 				fmt.Println("\nClosing bot")
 				break loop
 			} else if err != nil {
