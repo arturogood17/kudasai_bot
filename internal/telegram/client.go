@@ -128,6 +128,6 @@ func RequestSending(c *Client, ctx context.Context, URL string, method string, p
 }
 
 func LogPostSentAndMarker(logger *slog.Logger, t time.Time, p feed.Post) {
-	state.NewLogPostSuccess(logger, time.Now(), p.PubDate, fmt.Sprintf("Sent %d/%d. Last sent (title) {%s}", p.PostNum, p.TotalPost, p.Title))
+	state.NewLogPostSuccess(logger, time.Now(), p.PubDate, fmt.Sprintf("Sent %d/%d. Last sent (title) {%s}", p.PostNum+1, p.TotalPost, p.Title))
 	state.Marker(logger, p.Title, p.PubDate)
 }

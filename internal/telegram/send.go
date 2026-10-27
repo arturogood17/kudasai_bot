@@ -3,6 +3,7 @@
 package telegram
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -16,6 +17,7 @@ func SendPosts(c Client, logger *slog.Logger, posts []feed.Post) error {
 	i := 0
 	for ; i <= numPosts-1; i++ {
 		if c.Ctx.Err() != nil {
+			state.NewLogError(logger, time.Now(), fmt.Sprintf("Sent %d/%d. Failed to send %d", i, numPosts, numPosts-i), errors.New("Bot closed"))
 			break
 		}
 		p := posts[i]
