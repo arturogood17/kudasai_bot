@@ -31,7 +31,7 @@ func New(ctx context.Context, c *config.Config) Client {
 	}
 }
 
-func (c *Client) SendMessage(logger *slog.Logger, message any) error {
+func (c *Client) SendMessage(logger *slog.Logger, post feed.Post, message string) error {
 	type content struct {
 		Text    string `json:"text"`
 		Chat_ID int    `json:"chat_id"`
@@ -40,7 +40,7 @@ func (c *Client) SendMessage(logger *slog.Logger, message any) error {
 	URL := fmt.Sprintf("%v%v/sendMessage", config.URL, c.Token)
 
 	payload := content{
-		Text:    message.(string),
+		Text:    message,
 		Chat_ID: c.Chat_id,
 	}
 
@@ -48,6 +48,10 @@ func (c *Client) SendMessage(logger *slog.Logger, message any) error {
 	if err != nil {
 		state.NewLogError(logger, time.Now(), "Error trying to send the request", nil)
 		return err
+	}
+
+	if post != (feed.Post{}) {
+		LogPostSentAndMarker(logger, time.Now(), post)
 	}
 
 	defer resp.Body.Close()
@@ -80,8 +84,12 @@ func (c *Client) SendPhoto(logger *slog.Logger, post feed.Post) error {
 
 	resp, err := RequestSending(c, URL, "POST", payload)
 	if err != nil {
-		state.NewLogError(logger, time.Now(), err.Error(), nil)
+		state.NewLogError(logger, time.Now(), "Error trying to send the request", nil)
 		return err
+	}
+
+	if post != (feed.Post{}) {
+		LogPostSentAndMarker(logger, time.Now(), post)
 	}
 
 	defer resp.Body.Close()
@@ -105,7 +113,7 @@ func RequestSending(c *Client, URL string, method string, payload any) (*http.Re
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(c.Ctx, method, URL, data)
+	req, err := http.NewRequest(method, URL, data)
 	if err != nil {
 		return nil, err
 	}
@@ -117,4 +125,9 @@ func RequestSending(c *Client, URL string, method string, payload any) (*http.Re
 		return nil, err
 	}
 	return resp, nil
+}
+
+func LogPostSentAndMarker(logger *slog.Logger, t time.Time, p feed.Post) {
+	state.NewLogPostSuccess(logger, time.Now(), p.PubDate, fmt.Sprintf("Sent %d/%d. Last sent (title) {%s}", p.PostNum, p.TotalPost, p.Title))
+	state.Marker(logger, p.Title, p.PubDate)
 }
