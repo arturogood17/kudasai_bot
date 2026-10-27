@@ -44,7 +44,7 @@ func (c *Client) SendMessage(logger *slog.Logger, post feed.Post, message string
 		Chat_ID: c.Chat_id,
 	}
 
-	resp, err := RequestSending(c, URL, "POST", payload)
+	resp, err := RequestSending(c, context.Background(), URL, "POST", payload)
 	if err != nil {
 		state.NewLogError(logger, time.Now(), "Error trying to send the request", nil)
 		return err
@@ -82,7 +82,7 @@ func (c *Client) SendPhoto(logger *slog.Logger, post feed.Post) error {
 		ParseMode: "HTML",
 	}
 
-	resp, err := RequestSending(c, URL, "POST", payload)
+	resp, err := RequestSending(c, context.Background(), URL, "POST", payload)
 	if err != nil {
 		state.NewLogError(logger, time.Now(), "Error trying to send the request", nil)
 		return err
@@ -107,13 +107,13 @@ func ToMarshalAndBuffer(d any) (*bytes.Buffer, error) {
 	return bytes.NewBuffer(p), nil
 }
 
-func RequestSending(c *Client, URL string, method string, payload any) (*http.Response, error) {
+func RequestSending(c *Client, ctx context.Context, URL string, method string, payload any) (*http.Response, error) {
 	data, err := ToMarshalAndBuffer(payload)
 	if data == nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest(method, URL, data)
+	req, err := http.NewRequestWithContext(ctx, method, URL, data)
 	if err != nil {
 		return nil, err
 	}

@@ -15,6 +15,9 @@ func SendPosts(c Client, logger *slog.Logger, posts []feed.Post) error {
 	numPosts := len(posts)
 	i := 0
 	for ; i <= numPosts-1; i++ {
+		if c.Ctx.Err() != nil {
+			break
+		}
 		p := posts[i]
 		p.TotalPost = numPosts
 		p.PostNum = i
