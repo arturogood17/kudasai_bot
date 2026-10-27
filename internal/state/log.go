@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"os"
 	"time"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 type LogFile struct {
@@ -27,10 +29,27 @@ func (l LogFile) WithGroup(name string) slog.Handler {
 }
 
 func NewMultilogger(ErrorFile, LogInfoFile *os.File) *slog.Logger {
-	LF := LogFile{
-		slog.NewJSONHandler(LogInfoFile, nil),
+	logRotator := &lumberjack.Logger{
+		Filename:   LogInfoFile.Name(),
+		MaxSize:    200,
+		MaxBackups: 2,
+		MaxAge:     15,
+		Compress:   true,
 	}
-	ErrorHandler := NewHandler(ErrorFile, slog.LevelWarn)
+
+	LF := LogFile{
+		slog.NewJSONHandler(logRotator, nil),
+	}
+
+	logErrorRotator := &lumberjack.Logger{
+		Filename:   ErrorFile.Name(),
+		MaxSize:    10,
+		MaxBackups: 2,
+		MaxAge:     15,
+		Compress:   true,
+	}
+
+	ErrorHandler := NewHandler(logErrorRotator, slog.LevelWarn)
 	return slog.New(slog.NewMultiHandler(LF, ErrorHandler))
 }
 
