@@ -1,3 +1,4 @@
 .env
 *.md
 /data
+kudasai_bot
