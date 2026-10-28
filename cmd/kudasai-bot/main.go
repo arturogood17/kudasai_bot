@@ -18,13 +18,13 @@ func main() {
 
 	LogFile, err := config.OpenOrCreateLogFile(config.LOGFILEPATH)
 	if err != nil {
-		fmt.Printf("Couldn't open/create the logging file: %v", err)
+		fmt.Printf("Couldn't open/create the logging file: %v\n", err)
 		os.Exit(1)
 	}
 
 	ErrorFile, err := config.OpenOrCreateLogFile(config.ERRORFILEPATH)
 	if err != nil {
-		fmt.Printf("Couldn't open/create the error logging file: %v", err)
+		fmt.Printf("Couldn't open/create the error logging file: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -35,10 +35,12 @@ func main() {
 
 	configLoaded := config.Load(logger)
 	if configLoaded == nil {
+		fmt.Printf("Failed to load secrets: %v\n", err)
 		os.Exit(1)
 	}
 
 	if configLoaded.CHAT_ID == 0 || configLoaded.TOKEN_ID == "" {
+		fmt.Println("Failed to load one of the secrets")
 		state.NewLogError(logger, time.Now(), "Failed to load one of the secrets", nil)
 		os.Exit(1)
 	}
