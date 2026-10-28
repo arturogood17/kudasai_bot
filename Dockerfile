@@ -14,6 +14,6 @@ RUN mkdir data
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /kudasai/kudasai_bot ./cmd/kudasai-bot/
 
-CMD ["/kudasai_bot"]
+CMD ["/kudasai/kudasai_bot"]
 
 
