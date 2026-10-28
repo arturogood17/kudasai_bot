@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"log/slog"
 	"os"
 	"path"
@@ -27,12 +26,9 @@ func Load(logger *slog.Logger) *Config {
 	viper := viper.New()
 	viper.SetConfigFile(".env")
 
-	if err := viper.ReadInConfig(); err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			state.NewLogError(logger, time.Now(), "Unable to read secrets", err)
-			return nil
-		}
-	}
+	viper.BindEnv("TOKEN_ID")
+	viper.BindEnv("CHAT_ID")
+
 	err := viper.Unmarshal(&config)
 	if err != nil {
 		state.NewLogError(logger, time.Now(), "Unable to unmarshal", err)
