@@ -1,0 +1,9 @@
+.env
+README.md
+todo-bot-telegram-kudasai.md
+.gitignore
+/data
+.dockerignore
+.git
+Dockerfile
+kudasai_bot
