@@ -7,11 +7,12 @@ import (
 
 const Manga = "Manga"
 const Anime = "Anime"
+const Novelas = "Novelas Ligeras"
 
 func FilterByCategory(posts []feed.Post) []feed.Post {
 	var filteredPosts []feed.Post
 	for _, p := range posts {
-		if p.Category == Manga || p.Category == Anime {
+		if p.Category == Manga || p.Category == Anime || p.Category == Novelas {
 			filteredPosts = append(filteredPosts, p)
 		}
 	}
