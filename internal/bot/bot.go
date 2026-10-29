@@ -57,6 +57,23 @@ loop:
 
 			retryTime = 1 * time.Second
 
+			if resp.StatusCode >= 400 && resp.StatusCode <= 428 || resp.StatusCode >= 430 && resp.StatusCode <= 499 {
+				state.NewLogError(logger, time.Now(), fmt.Sprintf("Client error: %d", resp.StatusCode), nil)
+				fmt.Printf("Client error: %d\n", resp.StatusCode)
+				fmt.Println("Closing bot")
+				return
+			} else if resp.StatusCode == 429 || resp.StatusCode >= 500 {
+				state.NewLogError(logger, time.Now(), fmt.Sprintf("Server error: %d", resp.StatusCode), nil)
+				time.Sleep(retryTime)
+				retryTime += 1 * time.Second
+				if retryTime >= 30*time.Second {
+					retryTime = 30 * time.Second
+				}
+				continue
+			}
+
+			retryTime = 1 * time.Second
+
 			var upd Updates
 
 			if err = json.NewDecoder(resp.Body).Decode(&upd); err != nil {
