@@ -2,7 +2,7 @@
 
 Get the latest anime, manga and light novel news in your Telegram chat by sending a single command. Kudasai_Bot is a Go program that fetches news from ([SomosKudasai](https://somoskudasai.com/)) RSS feed. The news is sent to your Telegram chat through your bot.
 
-[Kudasai_Bot demo](assets/Kudasai_Bot.gif)
+![Kudasai_Bot demo](assets/Kudasai_Bot.gif)
 
 **Built using**: Go, ([viper](https://github.com/spf13/viper)) (environment variables), ([lumberjack](https://github.com/natefinch/lumberjack)) (log rotation) and Docker.
 
