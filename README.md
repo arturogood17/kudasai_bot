@@ -39,6 +39,7 @@ Then, you have two options:
 - Clone the repo:
 
 > git clone https://github.com/arturogood17/kudasai_bot
+
 > cd kudasai_bot
 
 
@@ -50,6 +51,7 @@ Then, you have two options:
 - Build the binary and run it:
 
 > go build -o kudasai_bot cmd/kudasai_bot/main.go
+
 > token_id=XXXXXX chat_id=XXXXXX ./kudasai_bot
 
 
